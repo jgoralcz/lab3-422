@@ -1,19 +1,14 @@
 package edu.asupoly.ser422.lab3.api;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import edu.asupoly.ser422.lab3.model.PhoneEntry;
 
-import edu.asupoly.ser422.lab3.model.Author;
+import java.io.IOException;
 
 /*
  * This is an example of a simple custom serializer (converts a Java object to a JSON string).
@@ -23,46 +18,47 @@ import edu.asupoly.ser422.lab3.model.Author;
  * Note that you would typically write a deserializer as well when you customize the JSON. A
  * deserializer goes in the opposite direction, converting JSON to a Java object. So, in this case
  */
-public final class AuthorSerializationHelper {
-	// some locally used constant naming our Author field names
-	private static final String __AUTHORID = "authorIdent";
+public final class PhoneEntrySerializationHelper {
+	// some locally used constant naming our phone entry field names
+	private static final String __PHONENUMBER = "phoneNumber";
+	private static final String __PHONEBOOKID = "phoneBookID";
 	private static final String __LASTNAME = "lName";
 	private static final String __FIRSTNAME = "fName";
 	
-	private final static AuthorSerializationHelper __me = new AuthorSerializationHelper();
+	private final static PhoneEntrySerializationHelper __me = new PhoneEntrySerializationHelper();
 	private ObjectMapper mapper = new ObjectMapper();
 	private SimpleModule module = new SimpleModule();
 	
 	// Singleton
-	private AuthorSerializationHelper() {
-		module.addSerializer(Author.class, new AuthorJSON());
-		module.addDeserializer(Author.class, new JSONAuthor());
+	private PhoneEntrySerializationHelper() {
+		module.addSerializer(PhoneEntry.class, new AuthorJSON());
+		module.addDeserializer(PhoneEntry.class, new JSONAuthor());
 		mapper.registerModule(module);
 	}
 	
-	public static AuthorSerializationHelper getHelper() {
+	public static PhoneEntrySerializationHelper getHelper() {
 		return __me;
 	}
 	
-	public String generateJSON(Author author) throws JsonProcessingException {
+	public String generateJSON(PhoneEntry phoneEntry) throws JsonProcessingException {
 		// Since a custom serializer was added to the mapper via registerModule,
 		// internally it will invoke the serialize method in the inner class below
-		return mapper.writeValueAsString(author);
+		return mapper.writeValueAsString(phoneEntry);
 	}
 	
-	public Author consumeJSON(String json) throws IOException, JsonProcessingException {
+	public PhoneEntry consumeJSON(String json) throws IOException, JsonProcessingException {
 		// A deserializer goes from JSON to the Object using the inverse process
 		System.out.println("consumeJSON: " + json);
-		return mapper.readValue(json, Author.class);
+		return mapper.readValue(json, PhoneEntry.class);
 	}
 	
 	// Inner class for custom Author deserialization.
 	// Loosely based on http://tutorials.jenkov.com/java-json/jackson-objectmapper.html
-    final private class JSONAuthor extends JsonDeserializer<Author>  {
+    final private class JSONAuthor extends JsonDeserializer<PhoneEntry>  {
 		@Override
-		public Author deserialize(JsonParser parser, DeserializationContext context)
+		public PhoneEntry deserialize(JsonParser parser, DeserializationContext context)
 				throws IOException, JsonProcessingException {
-			Author author = new Author();
+			PhoneEntry phoneEntry = new PhoneEntry();
 			JsonToken token = parser.nextToken();
 			while (!parser.isClosed()) {
 				System.out.print("Deserializer processing token: " + token.asString());
@@ -70,31 +66,34 @@ public final class AuthorSerializationHelper {
 					// we have a JSON Field, get it and see which one we have
 					String fieldName = parser.getCurrentName();
 					System.out.println(", field name: " + fieldName);
-					// Check for which of our 3 fields comes next and set the next token in there
+					// Check for which of our 4 fields comes next and set the next token in there
 					token = parser.nextToken();
-					if (fieldName.equals(__AUTHORID)) 
-						author.setAuthorId(parser.getValueAsInt());
+					if (fieldName.equals(__PHONENUMBER))
+						phoneEntry.setPhoneNumber(parser.getValueAsString());
 					else if (fieldName.equals(__LASTNAME))
-						author.setLastName(parser.getValueAsString());
+						phoneEntry.setLastName(parser.getValueAsString());
 					else if (fieldName.equals(__FIRSTNAME))
-						author.setFirstName(parser.getValueAsString());
+						phoneEntry.setFirstName(parser.getValueAsString());
+					else if(fieldName.equals(__PHONEBOOKID))
+						phoneEntry.setPhoneBookID(parser.getValueAsString());
 				}
 				token = parser.nextToken();
 			}
-			System.out.println("Deserializer returning Author: " + author);
-			return author;
+			System.out.println("Deserializer returning PhoneEntry: " + phoneEntry);
+			return phoneEntry;
 		}
     }
     
 	// Inner class for custom Author serialization.
-    final private class AuthorJSON extends JsonSerializer<Author>  {
+    final private class AuthorJSON extends JsonSerializer<PhoneEntry>  {
        @Override
-       public void serialize(Author author, JsonGenerator jgen, SerializerProvider provider)
+       public void serialize(PhoneEntry phoneEntry, JsonGenerator jgen, SerializerProvider provider)
                throws IOException, JsonProcessingException {
            jgen.writeStartObject();	
-           jgen.writeNumberField(__AUTHORID, author.getAuthorId());
-           jgen.writeStringField(__LASTNAME, author.getLastName());
-           jgen.writeStringField(__FIRSTNAME, author.getFirstName());
+           jgen.writeNumberField(__PHONENUMBER, Integer.parseInt(phoneEntry.getPhoneNumber()));
+		   jgen.writeNumberField(__PHONEBOOKID, Integer.parseInt(phoneEntry.getPhoneBookID()));
+           jgen.writeStringField(__LASTNAME, phoneEntry.getLastName());
+           jgen.writeStringField(__FIRSTNAME, phoneEntry.getFirstName());
            jgen.writeEndObject();
        }
    }

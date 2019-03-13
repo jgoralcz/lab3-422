@@ -6,17 +6,20 @@ import java.util.*;
 public class PhoneBook {
 	public static final String DEFAULT_FILENAME = "phonebook.txt";
 
-	private Map<String, PhoneEntry> _pbook = new HashMap<String, PhoneEntry>();
+	private Map<String, PhoneEntry> _pbook = new HashMap<>();
 
 	public PhoneBook() throws IOException {
 		this(DEFAULT_FILENAME); 
 	}
-	public PhoneBook(String fname) throws IOException {
+
+	private PhoneBook(String fname) throws IOException {
 		this(PhoneBook.class.getClassLoader().getResourceAsStream(fname));
 	}
+
 	public PhoneBook(InputStream is) throws IOException {
 		this(new BufferedReader(new InputStreamReader(is)));
 	}
+
 	private PhoneBook(BufferedReader br) throws IOException {	
 		String name = null;
 		String lname = null;
@@ -41,8 +44,7 @@ public class PhoneBook {
 		}
 	}
 
-	public void savePhoneBook(String fname)
-	{
+	public void savePhoneBook(String fname) {
 		try {
 			PrintWriter pw = new PrintWriter(new FileOutputStream(fname));
 			String[] entries = listEntries();
@@ -58,25 +60,22 @@ public class PhoneBook {
 		}
 	}
 
-	public void editEntry(String phone, String fname, String lname) {
-		PhoneEntry pentry = _pbook.get(phone);
+	public void editEntry(String phoneNumber, String fname, String lname) {
+		PhoneEntry pentry = _pbook.get(phoneNumber);
 		pentry.changeName(fname, lname);
 	}
 
-	public void addEntry(String fname, String lname, String phone)
-	{ 
-		addEntry(phone, new PhoneEntry(fname, lname, phone));
+	public void addEntry(String fname, String lname, String phoneNumber) {
+		addEntry(phoneNumber, new PhoneEntry(phoneNumber, null, fname, lname));
 	}
 
-	public void addEntry(String number, PhoneEntry entry)
-	{ _pbook.put(number, entry); }
+	public void addEntry(String number, PhoneEntry entry) { _pbook.put(number, entry); }
 
-	public PhoneEntry removeEntry(String phone) {
-		return _pbook.remove(phone);
+	public PhoneEntry removeEntry(String phoneNumber) {
+		return _pbook.remove(phoneNumber);
 	}
 
-	public String[] listEntries()
-	{
+	public String[] listEntries() {
 		String[] rval = new String[_pbook.size()];
 		int i = 0;
 		PhoneEntry nextEntry = null;

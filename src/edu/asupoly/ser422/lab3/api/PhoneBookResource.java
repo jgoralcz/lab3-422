@@ -105,10 +105,10 @@
 //	public Response getAuthor(@PathParam("authorId") int aid) {
 //		Author author = __bService.getAuthor(aid);
 //
-//		// AuthorSerializationHelper will build a slightly different JSON string and we still use
+//		// PhoneEntrySerializationHelper will build a slightly different JSON string and we still use
 //		// the ResponseBuilder to use that. The key property names are changed in the result.
 //		try {
-//			String aString = AuthorSerializationHelper.getHelper().generateJSON(author);
+//			String aString = PhoneEntrySerializationHelper.getHelper().generateJSON(author);
 //			return Response.status(Response.Status.OK).entity(aString).build();
 //		} catch (Exception exc) {
 //			exc.printStackTrace();
@@ -158,7 +158,7 @@
 //    }
 //    */
 //    /*
-//     * This 2nd version of PUT uses the deserializer from AuthorSerializationHelper, and process the JSON given
+//     * This 2nd version of PUT uses the deserializer from PhoneEntrySerializationHelper, and process the JSON given
 //     * in GET version 3 above. Note that when you use the custom serializer/deserializer, it will not be
 //     * compatible with methods that do not use it (which will continue to use the Jersey default). If you
 //     * decide to customize, then you should be certain to use your (de)serializer throughout your resource!
@@ -167,11 +167,11 @@
 //    @Consumes("application/json")
 //    public Response updateAuthor(String json) {
 //        try {
-//            Author a = AuthorSerializationHelper.getHelper().consumeJSON(json);
+//            Author a = PhoneEntrySerializationHelper.getHelper().consumeJSON(json);
 //            if (__bService.updateAuthor(a)) {
 //                // In the response payload it would still use Jackson's default serializer,
 //                // so we directly invoke our serializer so the PUT payload reflects what it should.
-//                String aString = AuthorSerializationHelper.getHelper().generateJSON(a);
+//                String aString = PhoneEntrySerializationHelper.getHelper().generateJSON(a);
 //                return Response.status(201).entity(aString).build();
 //            } else {
 //                return Response.status(404, "{ \"message \" : \"No such Author " + a.getAuthorId() + "\"}").build();

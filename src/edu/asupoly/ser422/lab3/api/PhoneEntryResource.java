@@ -1,32 +1,20 @@
 package edu.asupoly.ser422.lab3.api;
 
-import java.util.List;
-
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.PATCH;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import edu.asupoly.ser422.lab3.model.PhoneEntry;
 import edu.asupoly.ser422.lab3.services.PhoneBookService;
 import edu.asupoly.ser422.lab3.services.PhoneBookServiceFactory;
 
-@Path("/authors")
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.util.List;
+
+@Path("/phones")
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-public class AuthorResource {
-    private static BooktownService __bService = BooktownServiceFactory.getInstance();
+public class PhoneEntryResource {
+    private static PhoneBookService __bService = PhoneBookServiceFactory.getInstance();
 
     // Technique for location header taken from
     // http://usna86-techbits.blogspot.com/2013/02/how-to-return-location-header-from.html
@@ -66,8 +54,8 @@ public class AuthorResource {
      *
      * */
     @GET
-    public List<Author> getAuthors() {
-        return __bService.getAuthors();
+    public List<PhoneEntry> getPhoneEntriesFromPhoneBookID(int id) {
+        return __bService.getAllEntriesFromPhoneBook(Integer.toString(id));
     }
 
     /* This is the first version of GET we did, using defaults and letting Jersey internally serialize
@@ -81,41 +69,38 @@ public class AuthorResource {
      * This is a second version - it uses Jackson's default mapping via ObjectMapper, which spits out
      * the same JSON as Jersey's internal version, so the output will look the same as version 1 when you run
      */
-    @GET
-    @Path("/{authorId}")
-    public Response getAuthor(@PathParam("authorId") int aid) {
-        // This isn't correct - what if the authorId is not for an active author?
-        Author author = __bService.getAuthor(aid);
-        // let's use Jackson instead. ObjectMapper will build a JSON string and we use
-        // the ResponseBuilder to use that. Note the result looks the same
-        try {
-            String aString = new ObjectMapper().writeValueAsString(author);
-            return Response.status(Response.Status.OK).entity(aString).build();
-        } catch (Exception exc) {
-            exc.printStackTrace();
-            return null;
-        }
-    }
+//    @GET
+//    @Path("/{authorId}")
+//    public Response getAuthor(@PathParam("authorId") int aid) {
+//        // This isn't correct - what if the authorId is not for an active author?
+//        Author author = __bService.getAuthor(aid);
+//        // let's use Jackson instead. ObjectMapper will build a JSON string and we use
+//        // the ResponseBuilder to use that. Note the result looks the same
+//        try {
+//            String aString = new ObjectMapper().writeValueAsString(author);
+//            return Response.status(Response.Status.OK).entity(aString).build();
+//        } catch (Exception exc) {
+//            exc.printStackTrace();
+//            return null;
+//        }
+//    }
 
     // This is a 3rd version using a custom serializer I've encapsulated over in the new helper class
-	/*
-	 * @GET
+    @GET
+	@Path("/{phoneNumber}")
+	public Response getPhoneEntry(@PathParam("phoneNumber") int aid) {
+		PhoneEntry phoneEntry = __bService.getPhoneEntry(Integer.toString(aid));
 
-	@Path("/{authorId}")
-	public Response getAuthor(@PathParam("authorId") int aid) {
-		Author author = __bService.getAuthor(aid);
-
-		// AuthorSerializationHelper will build a slightly different JSON string and we still use
+		// PhoneEntrySerializationHelper will build a slightly different JSON string and we still use
 		// the ResponseBuilder to use that. The key property names are changed in the result.
 		try {
-			String aString = AuthorSerializationHelper.getHelper().generateJSON(author);
+			String aString = PhoneEntrySerializationHelper.getHelper().generateJSON(phoneEntry);
 			return Response.status(Response.Status.OK).entity(aString).build();
 		} catch (Exception exc) {
 			exc.printStackTrace();
 			return null;
 		}
 	}
-	*/
 	/* This was the first version of POST we did
 	@POST
 	@Consumes("text/plain")
@@ -129,20 +114,20 @@ public class AuthorResource {
     /*
      * This was the second version that added simple custom response headers and payload
      */
-    @POST
-    @Consumes("text/plain")
-    public Response createAuthor(String name) {
-        String[] names = name.split(" ");
-        int aid = __bService.createAuthor(names[0], names[1]);
-        if (aid == -1) {
-            return Response.status(500).entity("{ \" EXCEPTION INSERTING INTO DATABASE! \"}").build();
-        } else if (aid == 0) {
-            return Response.status(500).entity("{ \" ERROR INSERTING INTO DATABASE! \"}").build();
-        }
-        return Response.status(201)
-                .header("Location", String.format("%s/%s",_uriInfo.getAbsolutePath().toString(), aid))
-                .entity("{ \"Author\" : \"" + aid + "\"}").build();
-    }
+//    @POST
+//    @Consumes("text/plain")
+//    public Response createAuthor(String name) {
+//        String[] names = name.split(" ");
+//        int aid = __bService.createAuthor(names[0], names[1]);
+//        if (aid == -1) {
+//            return Response.status(500).entity("{ \" EXCEPTION INSERTING INTO DATABASE! \"}").build();
+//        } else if (aid == 0) {
+//            return Response.status(500).entity("{ \" ERROR INSERTING INTO DATABASE! \"}").build();
+//        }
+//        return Response.status(201)
+//                .header("Location", String.format("%s/%s",_uriInfo.getAbsolutePath().toString(), aid))
+//                .entity("{ \"Author\" : \"" + aid + "\"}").build();
+//    }
 
     /*
      * This is the original PUT method that consumed the default JSON Jersey produces. Would work with the
@@ -158,33 +143,33 @@ public class AuthorResource {
     }
     */
     /*
-     * This 2nd version of PUT uses the deserializer from AuthorSerializationHelper, and process the JSON given
+     * This 2nd version of PUT uses the deserializer from PhoneEntrySerializationHelper, and process the JSON given
      * in GET version 3 above. Note that when you use the custom serializer/deserializer, it will not be
      * compatible with methods that do not use it (which will continue to use the Jersey default). If you
      * decide to customize, then you should be certain to use your (de)serializer throughout your resource!
      */
-    @PUT
-    @Consumes("application/json")
-    public Response updateAuthor(String json) {
-        try {
-            Author a = AuthorSerializationHelper.getHelper().consumeJSON(json);
-            if (__bService.updateAuthor(a)) {
-                // In the response payload it would still use Jackson's default serializer,
-                // so we directly invoke our serializer so the PUT payload reflects what it should.
-                String aString = AuthorSerializationHelper.getHelper().generateJSON(a);
-                return Response.status(201).entity(aString).build();
-            } else {
-                return Response.status(404, "{ \"message \" : \"No such Author " + a.getAuthorId() + "\"}").build();
-            }
-        } catch (Exception exc) {
-            exc.printStackTrace();
-            return Response.status(500, "{ \"message \" : \"Internal server error deserializing Author JSON\"}").build();
-        }
-    }
+//    @PUT
+//    @Consumes("application/json")
+//    public Response updateAuthor(String json) {
+//        try {
+//            Author a = PhoneEntrySerializationHelper.getHelper().consumeJSON(json);
+//            if (__bService.updateAuthor(a)) {
+//                // In the response payload it would still use Jackson's default serializer,
+//                // so we directly invoke our serializer so the PUT payload reflects what it should.
+//                String aString = PhoneEntrySerializationHelper.getHelper().generateJSON(a);
+//                return Response.status(201).entity(aString).build();
+//            } else {
+//                return Response.status(404, "{ \"message \" : \"No such Author " + a.getAuthorId() + "\"}").build();
+//            }
+//        } catch (Exception exc) {
+//            exc.printStackTrace();
+//            return Response.status(500, "{ \"message \" : \"Internal server error deserializing Author JSON\"}").build();
+//        }
+//    }
 
     @DELETE
     public Response deleteAuthor(@QueryParam("id") int aid) {
-        if (__bService.deleteAuthor(aid)) {
+        if (__bService.deletePhoneEntry(Integer.toString(aid))) {
             return Response.status(204).build();
         } else {
             return Response.status(404, "{ \"message \" : \"No such Author " + aid + "\"}").build();

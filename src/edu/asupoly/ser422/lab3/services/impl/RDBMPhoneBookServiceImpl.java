@@ -1,6 +1,7 @@
 package edu.asupoly.ser422.lab3.services.impl;
 
 import edu.asupoly.ser422.lab3.model.PhoneEntry;
+import edu.asupoly.ser422.lab3.services.PhoneBookService;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -8,7 +9,7 @@ import java.util.List;
 import java.util.Properties;
 
 //A simple impl of interface PhoneBookService
-public class RDBMPhoneBookServiceImpl extends APhoneBookServiceImpl {
+public class RDBMPhoneBookServiceImpl implements PhoneBookService {
 	private static Properties __dbProperties;
 	private static String __jdbcUrl;
 	private static String __jdbcUser;

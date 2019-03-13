@@ -1,6 +1,7 @@
 package edu.asupoly.ser422.lab3.model;
 
 public class PhoneEntry {
+
     private String firstName;
     private String lastName;
     private String phoneNumber;
@@ -13,8 +14,10 @@ public class PhoneEntry {
         this.phoneBookID = phoneBookID;
     }
 
+    public PhoneEntry() {}
 
-    public void changeName(String newfname, String newlname) {
+
+    void changeName(String newfname, String newlname) {
     	firstName = newfname;
     	// This is here to introduce artifical latency for testing purposes
     	try {
@@ -39,6 +42,24 @@ public class PhoneEntry {
 
     public String getPhoneBookID() {
         return phoneBookID;
+    }
+
+
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public void setPhoneBookID(String phoneBookID) {
+        this.phoneBookID = phoneBookID;
     }
 
     public String toString() { return firstName + "\n" + lastName + "\n" + phoneNumber + "\n" + phoneBookID; }

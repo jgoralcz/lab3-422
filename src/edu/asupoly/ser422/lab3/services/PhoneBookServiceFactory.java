@@ -1,26 +1,27 @@
 package edu.asupoly.ser422.lab3.services;
 
+import edu.asupoly.ser422.lab3.services.impl.RDBMPhoneBookServiceImpl;
+
 import java.util.Properties;
 
 //import edu.asupoly.ser422.lab3.model.PhoneEntry;
-//import edu.asupoly.ser422.lab3.services.impl.SimplePhoneBookServiceImpl;
 
 // we'll build on this later
 public class PhoneBookServiceFactory {
-    private PhoneBookServiceFactory() {}
+	private PhoneBookServiceFactory() {}
 
-    final static String propertiesFile = "/lab3.properties";
+	final static String propertiesFile = "/lab3.properties";
 
-    public static PhoneBookService getInstance() {
-	// should really read from a property here
-	if (__phonebookService == null) {
-		__phonebookService = new SimplePhoneBookServiceImpl();
+	public static PhoneBookService getInstance() {
+		// should really read from a property here
+		if (__phonebookService == null) {
+			__phonebookService = new RDBMPhoneBookServiceImpl();
+		}
+		return __phonebookService;
 	}
-	return __phonebookService;
-    }
 
-    private static PhoneBookService __phonebookService;
-    
+	private static PhoneBookService __phonebookService;
+
 	// This class is going to look for a file named lab3.properties in the classpath
 	// to get its initial settings
 	static {
@@ -32,7 +33,7 @@ public class PhoneBookServiceFactory {
 			if (serviceImpl != null) {
 				initClass = Class.forName(serviceImpl);
 			} else {
-				initClass = Class.forName("edu.asupoly.ser422.lab3.services.impl.SimplePhoneBookService");
+				throw new Error("Must have the file: edu.asupoly.ser422.lab3.services.impl.RDBMPhoneBookService in the properties file!!");
 			}
 			__phonebookService = (PhoneBookService) initClass.newInstance();
 		} catch (Throwable t) {
@@ -41,7 +42,7 @@ public class PhoneBookServiceFactory {
 
 		}
 	}
-    
+
 }
 
 //	PhoneEntry pentry = new PhoneEntry(req.getParameter("firstname"),
