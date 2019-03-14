@@ -16,18 +16,6 @@ public class PhoneEntry {
 
     public PhoneEntry() {}
 
-
-    void changeName(String newfname, String newlname) {
-    	firstName = newfname;
-    	// This is here to introduce artifical latency for testing purposes
-    	try {
-			Thread.sleep(3000L);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-    	lastName  = newlname;
-    }
-
     public String getLastName() {
         return lastName;
     }

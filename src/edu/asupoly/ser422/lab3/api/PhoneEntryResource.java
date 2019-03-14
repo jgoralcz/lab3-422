@@ -1,16 +1,19 @@
 package edu.asupoly.ser422.lab3.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.asupoly.ser422.lab3.model.PhoneBook;
 import edu.asupoly.ser422.lab3.model.PhoneEntry;
 import edu.asupoly.ser422.lab3.services.PhoneBookService;
 import edu.asupoly.ser422.lab3.services.PhoneBookServiceFactory;
 
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.List;
+
+//import javax.ws.rs.PATCH;
 
 // Only doing JSON
 @Path("/phones")
@@ -40,43 +43,45 @@ public class PhoneEntryResource {
      * */
 
     /**
-     * @api {get} /authors Get list of Authors
-     * @apiName getAuthors
-     * @apiGroup Authors
+     * @api {get} /phones Get metadata of a phoneEntry designated by the phone number.
+     * @apiName getPhoneEntries
+     * @apiGroup phones
      *
      * @apiUse BadRequestError
      * @apiUse InternalServerError
-     *
+     * @apiUse ActviityNotFoundError
      * @apiSuccessExample Success-Response:
-     * 	HTTP/1.1 200 OK
-     * 	[
-     *   {"authorId":1111,"firstName":"Ariel","lastName":"Denham"},
-     *   {"authorId":1212,"firstName":"John","lastName":"Worsley"}
-     *  ]
-     *
+     *  HTTP/1.1 200 OK
+     *  { "firstName": "Jimmy", "lastName": "V", "phoneNumber": "480110987", "phoneBookID": null}
      * */
-
     @GET
     @Path("{number}")
-    public Response getPhoneEntry(@PathParam("number") String pid) {
-        // This isn't correct - what if the authorId is not for an active author?
-        // let's use Jackson instead. ObjectMapper will build a JSON string and we use
-        // the ResponseBuilder to use that. Note the result looks the same
+    public Response getPhoneEntriesFromPhoneBook(@PathParam("number") String pid) {
         try {
             // bad info 406 error, originally
             if(pid == null || pid.equals("")) {
-                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" 406 Invalid Input: Include a phone number. \" }").build();
+                return Response.status(Response.Status.BAD_REQUEST).entity("{ \" 406 Invalid Input: Must include phone number. \" }").build();
+            }
+
+            try {
+                Integer.parseInt(pid);
+            }
+            catch(Exception exc) {
+                return Response.status(Response.Status.BAD_REQUEST).entity("{ \" 406 Invalid Input: Must have integer phone number. \" }").build();
             }
 
             // search for our stuff
-            PhoneEntry phoneEntry = __bService.getPhoneEntry(pid);
-            String aString = new ObjectMapper().writeValueAsString(phoneEntry);
+            PhoneEntry pe = __bService.getPhoneEntry(pid);
+            String aString = new ObjectMapper().writeValueAsString(pe);
 
             // not found error
-            if(aString == null || aString.equals("") || aString.equals("null")) return Response.status(Response.Status.NOT_FOUND).entity("{ \" 404 Resource Not Found. \" }").build();
+            if(aString == null || aString.equals("") || aString.equals("null")) {
+                return Response.status(Response.Status.NOT_FOUND).entity("{ \" 404 Resource Not Found. \" }").build();
+            }
 
             // ok all good
             return Response.status(Response.Status.OK).entity(aString).build();
+
         } catch (Exception exc) {
             exc.printStackTrace();
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{ \" Cannot find anything. \" }").build();
@@ -107,14 +112,14 @@ public class PhoneEntryResource {
 
                     } catch (NumberFormatException exc) {
                         exc.printStackTrace();
-                        return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Invalid Format. First value must be phone number. \"}").build();
+                        return Response.status(Response.Status.BAD_REQUEST).entity("{ \" Invalid Format. First value must be phone number. \"}").build();
                     }
 
                     // check if it exists or not
                     PhoneEntry test = __bService.getPhoneEntry(values[0]);
 
                     if(test != null) {
-                        return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Resource already exists. \" }").build();
+                        return Response.status(Response.Status.BAD_REQUEST).entity("{ \" Resource already exists. \" }").build();
                     }
 
                     bookID = values[3];
@@ -124,7 +129,7 @@ public class PhoneEntryResource {
                     PhoneEntry test = __bService.getPhoneEntry(values[0]);
 
                     if(test != null) {
-                        return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Resource already exists. \" }").build();
+                        return Response.status(Response.Status.BAD_REQUEST).entity("{ \" Resource already exists. \" }").build();
                     }
 
                     aid = __bService.createPhoneEntry(values[0], values[1], values[2], bookID);
@@ -142,7 +147,7 @@ public class PhoneEntryResource {
 
             // may have only 3 or 4
             else {
-                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("406 Invalid Input: Separate input by spaces. Must have 3 or 4 values only.").build();
+                return Response.status(Response.Status.BAD_REQUEST).entity("406 Invalid Input: Separate input by spaces. Must have 3 or 4 values only.").build();
             }
         }
         catch(Exception exc) {
@@ -172,7 +177,7 @@ public class PhoneEntryResource {
 
                 } catch (NumberFormatException exc) {
                     exc.printStackTrace();
-                    return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Invalid Format. Values must be integer IDs of phone number and phonebook ID to assign to. \"}").build();
+                    return Response.status(Response.Status.BAD_REQUEST).entity("{ \" Invalid Format. Values must be integer IDs of phone number and phonebook ID to assign to. \"}").build();
                 }
 
                 // check if they exist
@@ -182,14 +187,14 @@ public class PhoneEntryResource {
                     return Response.status(Response.Status.NOT_FOUND).entity("{ \" Phone number does not exist. \" }").build();
                 }
 
-                List<PhoneEntry> phoneBook = __bService.getAllEntriesFromPhoneBook(values[1]);
+                PhoneBook phoneBook = __bService.getAllEntriesFromPhoneBook(values[1]);
                 if (phoneBook == null || phoneBook.size() <= 0) {
                     return Response.status(Response.Status.NOT_FOUND).entity("{ \" Phone book does not exist. \" }").build();
                 }
 
                 // check if phone entry already has a phone book
                 if (phoneEntry.getPhoneBookID() != null) {
-                    return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Phone number is already associated with a phone book. \" }").build();
+                    return Response.status(Response.Status.BAD_REQUEST).entity("{ \" Phone number is already associated with a phone book. \" }").build();
                 }
 
                 // finally change it
@@ -209,7 +214,7 @@ public class PhoneEntryResource {
 
                 } catch (NumberFormatException exc) {
                     exc.printStackTrace();
-                    return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Invalid Format. The first value must be an integer ID representing the phone number to change. \"}").build();
+                    return Response.status(Response.Status.BAD_REQUEST).entity("{ \" Invalid Format. The first value must be an integer ID representing the phone number to change. \"}").build();
                 }
 
                 // check if they exist
@@ -236,7 +241,7 @@ public class PhoneEntryResource {
                 }
             }
             else {
-                return Response.status(Response.Status.NOT_ACCEPTABLE).entity(" { \" 406 Invalid Input: Separate input by spaces. Must have 2 or 3 values only. \" } ").build();
+                return Response.status(Response.Status.BAD_REQUEST).entity(" { \" 406 Invalid Input: Separate input by spaces. Must have 2 or 3 values only. \" } ").build();
             }
         }
 
@@ -259,7 +264,7 @@ public class PhoneEntryResource {
 
             } catch (NumberFormatException exc) {
                 exc.printStackTrace();
-                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Invalid Format. The first value must be an integer ID representing the phone number to change. \"}").build();
+                return Response.status(Response.Status.BAD_REQUEST).entity("{ \" Invalid Format. The first value must be an integer ID representing the phone number to change. \"}").build();
             }
 
             // test if it successfully deleted

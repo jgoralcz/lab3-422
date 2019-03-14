@@ -1,11 +1,10 @@
 package edu.asupoly.ser422.lab3.services.impl;
 
+import edu.asupoly.ser422.lab3.model.PhoneBook;
 import edu.asupoly.ser422.lab3.model.PhoneEntry;
 import edu.asupoly.ser422.lab3.services.PhoneBookService;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 //A simple impl of interface PhoneBookService
@@ -31,19 +30,19 @@ public class RDBMPhoneBookServiceImpl implements PhoneBookService {
 	}
 
 	@Override
-	public List<PhoneEntry> getAllEntriesFromPhoneBook(String phoneBookID) {
+	public PhoneBook getAllEntriesFromPhoneBook(String phoneBookID) {
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 
-		List<PhoneEntry> rval = new ArrayList<>();
+		PhoneBook rval = new PhoneBook();
 		try {
 			conn = getConnection();
 			stmt = conn.prepareStatement(__dbProperties.getProperty("sql.getAllEntriesFromPhoneBook"));
 			stmt.setInt(1, Integer.parseInt(phoneBookID));
 			rs = stmt.executeQuery();
 			while (rs.next()) {
-				rval.add(new PhoneEntry(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4)));
+				rval.addPhoneEntry(new PhoneEntry(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4)));
 			}
 		} catch (Exception sqe) {
 			sqe.printStackTrace();
@@ -189,20 +188,21 @@ public class RDBMPhoneBookServiceImpl implements PhoneBookService {
 	}
 
 	@Override
-	public PhoneEntry getSubStringPhoneBookPhoneEntries(String firstName, String lastName) {
+	public PhoneBook getSubStringPhoneBookPhoneEntries(String id, String firstName, String lastName) {
 		Connection conn = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
-		PhoneEntry phoneEntry = null;
+		PhoneBook pBook = new PhoneBook();
 		try {
 			conn = getConnection();
 			stmt = conn.prepareStatement(__dbProperties.getProperty("sql.getSubStringPhoneBookPhoneEntries"));
-			stmt.setString(1, firstName);
-			stmt.setString(2, lastName);
+			stmt.setString(1, id);
+			stmt.setString(2, firstName);
+			stmt.setString(3, lastName);
 			rs = stmt.executeQuery();
 
 			if (rs.next()) {
-				phoneEntry = new PhoneEntry(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4));
+				pBook.addPhoneEntry(new PhoneEntry(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4)));
 			}
 
 		} catch (Exception sqe) {
@@ -218,23 +218,25 @@ public class RDBMPhoneBookServiceImpl implements PhoneBookService {
 				} catch (Exception e3) { e3.printStackTrace(); }
 			}
 		}
-		return phoneEntry;
+		return pBook;
 	}
 
 	@Override
-	public List<PhoneEntry> getUnlistedPhoneEntries() {
+	public PhoneBook getUnlistedPhoneEntries() {
 		Connection conn = null;
 		Statement stmt = null;
 		ResultSet rs = null;
-		List<PhoneEntry> rval = new ArrayList<>();
+		PhoneBook rval = new PhoneBook();
 		try {
 			conn = getConnection();
 
 			stmt = conn.createStatement();
-			rs = stmt.executeQuery(__dbProperties.getProperty("sql.getAllEntriesFromPhoneBook"));
+			rs = stmt.executeQuery(__dbProperties.getProperty("sql.getUnlistedPhoneEntries"));
+
 			while (rs.next()) {
-				rval.add(new PhoneEntry(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4)));
+				rval.addPhoneEntry(new PhoneEntry(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4)));
 			}
+
 		}
 		catch (Exception se) {
 			se.printStackTrace();
@@ -280,7 +282,7 @@ public class RDBMPhoneBookServiceImpl implements PhoneBookService {
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
-			return false;
+			return rval;
 		} finally {  // why nest all of these try/finally blocks?
 			try {
 				if (stmt != null) { stmt.close(); }
