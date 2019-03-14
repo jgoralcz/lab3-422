@@ -27,7 +27,7 @@ INSERT IGNORE INTO `phone_entry` VALUES (480110987, null, 'Jimmy','V'), (4805551
 --
 
 CREATE TABLE IF NOT EXISTS `phone_books` (
-  `id` BIGINT(10) PRIMARY KEY,
+  `id` BIGINT(10),
   `name` text
 );
 

@@ -12,10 +12,10 @@ public interface PhoneBookService {
 
     // Phone Entry methods
     PhoneEntry getPhoneEntry(String phoneNumber);
-    int createPhoneEntry(String phoneNumber, String phoneBookID, String firstName, String lastName);
+    int createPhoneEntry(String phoneNumber, String firstName, String lastName, String phoneBookID);
     boolean updatePhoneEntryNames(PhoneEntry phoneEntry); //String phoneNubmer, String firstName, String lastName
     boolean updatePhoneBookToPhoneEntry(String phoneNumber, String id);
     boolean deletePhoneEntry(String phoneNumber);
     PhoneEntry getSubStringPhoneBookPhoneEntries(String firstName, String lastName);
-    PhoneEntry getUnlistedPhoneEntries();
+    List<PhoneEntry> getUnlistedPhoneEntries();
 }

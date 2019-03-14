@@ -10,14 +10,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.List;
 
-//import javax.ws.rs.Consumes;
-//import javax.ws.rs.PATCH;
-//import javax.ws.rs.POST;
-//import javax.ws.rs.PUT;
-
+// Only doing JSON
 @Path("/phones")
-@Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+@Produces({MediaType.APPLICATION_JSON})
 public class PhoneEntryResource {
     private static PhoneBookService __bService = PhoneBookServiceFactory.getInstance();
 
@@ -58,131 +55,230 @@ public class PhoneEntryResource {
      *  ]
      *
      * */
-//    @GET
-//    @Path("/{phonebook}")
-//    public Response getPhoneEntriesFromPhoneBookID(int id) {
-//        try {
-//            // get the phone boook
-//            List<PhoneEntry> phonebook = __bService.getAllEntriesFromPhoneBook(Integer.toString(id));
-//            StringBuilder aString = new StringBuilder("[");
-//
-//            for( PhoneEntry phoneEntry : phonebook) {
-//                aString.append(PhoneEntrySerializationHelper.getHelper().generateJSON(phoneEntry));
-//            }
-//
-//            aString.append("]");
-//            return Response.status(Response.Status.OK).entity(aString).build();
-//
-//        } catch (Exception exc) {
-//            exc.printStackTrace();
-//            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Internal Server Error.").build();
-//        }
-//    }
 
-    /*
-     * This is a second version - it uses Jackson's default mapping via ObjectMapper, which spits out
-     * the same JSON as Jersey's internal version, so the output will look the same as version 1 when you run
-     */
     @GET
-    @Path("/{number}")
+    @Path("{number}")
     public Response getPhoneEntry(@PathParam("number") String pid) {
         // This isn't correct - what if the authorId is not for an active author?
         // let's use Jackson instead. ObjectMapper will build a JSON string and we use
         // the ResponseBuilder to use that. Note the result looks the same
         try {
-            // bad info
+            // bad info 406 error, originally
             if(pid == null || pid.equals("")) {
-                System.out.println("Nice try!");
-                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Invalid Input: Include a phone number.").build();
+                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" 406 Invalid Input: Include a phone number. \" }").build();
             }
 
-            System.out.println("Working!");
+            // search for our stuff
             PhoneEntry phoneEntry = __bService.getPhoneEntry(pid);
             String aString = new ObjectMapper().writeValueAsString(phoneEntry);
+
+            // not found error
+            if(aString == null || aString.equals("") || aString.equals("null")) return Response.status(Response.Status.NOT_FOUND).entity("{ \" 404 Resource Not Found. \" }").build();
+
+            // ok all good
             return Response.status(Response.Status.OK).entity(aString).build();
         } catch (Exception exc) {
             exc.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("error").build();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{ \" Cannot find anything. \" }").build();
         }
     }
-	/* This was the first version of POST we did
-	@POST
-	@Consumes("text/plain")
-    public int createAuthor(String name) {
-		String[] names = name.split(" ");
-		// not handled - what if this returns -1?
-		int aid = __bService.createAuthor(names[0], names[1]);
-		return aid;
-    }
-    */
-    /*
-     * This was the second version that added simple custom response headers and payload
-     */
-//    @POST
-//    @Consumes("text/plain")
-//    public Response createAuthor(String name) {
-//        String[] names = name.split(" ");
-//        int aid = __bService.createAuthor(names[0], names[1]);
-//        if (aid == -1) {
-//            return Response.status(500).entity("{ \" EXCEPTION INSERTING INTO DATABASE! \"}").build();
-//        } else if (aid == 0) {
-//            return Response.status(500).entity("{ \" ERROR INSERTING INTO DATABASE! \"}").build();
-//        }
-//        return Response.status(201)
-//                .header("Location", String.format("%s/%s",_uriInfo.getAbsolutePath().toString(), aid))
-//                .entity("{ \"Author\" : \"" + aid + "\"}").build();
-//    }
 
-    /*
-     * This is the original PUT method that consumed the default JSON Jersey produces. Would work with the
-     * JSON produced by getAuthor versions 1 and 2 above, but not version 33
+    /**
+     * must have 3 or 4 values
+     * @param name
+     * @return
+     */
+    @POST
+    @Consumes("text/plain")
+    public Response createPhoneEntry(String name) {
+
+        try {
+            String[] values = name.split(" ");
+            if (values.length == 3 || values.length == 4) {
+                int aid = -1;
+                String bookID = null;
+
+                // null or not
+                if (values.length == 4) {
+
+                    // try it out
+                    try {
+                        Integer.parseInt(values[0]);
+
+                    } catch (NumberFormatException exc) {
+                        exc.printStackTrace();
+                        return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Invalid Format. First value must be phone number. \"}").build();
+                    }
+
+                    // check if it exists or not
+                    PhoneEntry test = __bService.getPhoneEntry(values[0]);
+
+                    if(test != null) {
+                        return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Resource already exists. \" }").build();
+                    }
+
+                    bookID = values[3];
+                    aid = __bService.createPhoneEntry(values[0], values[1], values[2], bookID);
+                } else {
+                    // check if it exists or not
+                    PhoneEntry test = __bService.getPhoneEntry(values[0]);
+
+                    if(test != null) {
+                        return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Resource already exists. \" }").build();
+                    }
+
+                    aid = __bService.createPhoneEntry(values[0], values[1], values[2], bookID);
+                }
+
+                if (aid == -1) {
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{ \" EXCEPTION INSERTING INTO DATABASE! \" }").build();
+                } else if (aid == 0) {
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{ \" ERROR INSERTING INTO DATABASE! \" }").build();
+                }
+                return Response.status(Response.Status.CREATED)
+                        .header("Location", String.format("%s/%s", _uriInfo.getAbsolutePath().toString(), aid))
+                        .entity("{ \"phoneNumber\" : \"" + values[0] + "\"\n,\"phoneBookID\" : \"" + bookID + "\"}").build();
+            }
+
+            // may have only 3 or 4
+            else {
+                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("406 Invalid Input: Separate input by spaces. Must have 3 or 4 values only.").build();
+            }
+        }
+        catch(Exception exc) {
+            exc.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{ \" Unexpected Error. Please try again or report. \" }").build();
+        }
+    }
+    /**
+     * must have 3 or 4 values
+     * @param name
+     * @return
+     */
     @PUT
-    @Consumes("application/json")
-    public Response updateAuthor(Author a) {
-        if (__bService.updateAuthor(a)) {
-            return Response.status(201).entity("{ \"Author\" : \"" + a.getAuthorId() + "\"}").build();
-        } else {
-            return Response.status(404, "{ \"message \" : \"No such Author " + a.getAuthorId() + "\"}").build();
+    @Consumes("text/plain")
+    public Response updatePhoneEntryToPhoneBook(String name) {
+        try {
+            String[] values = name.split(" ");
+
+            // only 2 length is allowed
+            if (values.length == 2) {
+
+
+                // make sure they're both ints
+                try {
+                    Integer.parseInt(values[0]);
+                    Integer.parseInt(values[1]);
+
+                } catch (NumberFormatException exc) {
+                    exc.printStackTrace();
+                    return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Invalid Format. Values must be integer IDs of phone number and phonebook ID to assign to. \"}").build();
+                }
+
+                // check if they exist
+                PhoneEntry phoneEntry = __bService.getPhoneEntry(values[0]);
+
+                if (phoneEntry == null) {
+                    return Response.status(Response.Status.NOT_FOUND).entity("{ \" Phone number does not exist. \" }").build();
+                }
+
+                List<PhoneEntry> phoneBook = __bService.getAllEntriesFromPhoneBook(values[1]);
+                if (phoneBook == null || phoneBook.size() <= 0) {
+                    return Response.status(Response.Status.NOT_FOUND).entity("{ \" Phone book does not exist. \" }").build();
+                }
+
+                // check if phone entry already has a phone book
+                if (phoneEntry.getPhoneBookID() != null) {
+                    return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Phone number is already associated with a phone book. \" }").build();
+                }
+
+                // finally change it
+                boolean success = __bService.updatePhoneBookToPhoneEntry(values[1], values[0]);
+
+                if (success) {
+                    return Response.status(Response.Status.CREATED)
+                            .header("Location", String.format("%s/%s", _uriInfo.getAbsolutePath().toString(), values[0]))
+                            .entity("{ \"phoneNumber\" : \"" + values[0] + "\"\n,\"phoneBookID\" : \"" + values[1] + "\"}").build();
+                } else {
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{ \" Unexpected Error. Please try again or report. \" }").build();
+                }
+            }
+            else if (values.length == 3) {
+                try {
+                    Integer.parseInt(values[0]);
+
+                } catch (NumberFormatException exc) {
+                    exc.printStackTrace();
+                    return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Invalid Format. The first value must be an integer ID representing the phone number to change. \"}").build();
+                }
+
+                // check if they exist
+                PhoneEntry phoneEntry = __bService.getPhoneEntry(values[0]);
+
+                if (phoneEntry == null) {
+                    return Response.status(Response.Status.NOT_FOUND).entity("{ \" Phone number does not exist. \" }").build();
+                }
+
+                // update values
+                phoneEntry.setFirstName(values[1]);
+                phoneEntry.setLastName(values[2]);
+
+                // finally change it
+                boolean success = __bService.updatePhoneEntryNames(phoneEntry);
+
+                if (success) {
+                    return Response.status(Response.Status.CREATED)
+                            .header("Location", String.format("%s/%s", _uriInfo.getAbsolutePath().toString(), values[0]))
+                            .entity("{ \"phoneNumber\" : \"" + values[0] + "\"}").build();
+                }
+                else {
+                    return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{ \" Unexpected Error. Please try again or report. \" }").build();
+                }
+            }
+            else {
+                return Response.status(Response.Status.NOT_ACCEPTABLE).entity(" { \" 406 Invalid Input: Separate input by spaces. Must have 2 or 3 values only. \" } ").build();
+            }
+        }
+
+        catch(Exception exc) {
+            exc.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{ \" Unexpected Error. Please try again or report. \" }").build();
         }
     }
-    */
-    /*
-     * This 2nd version of PUT uses the deserializer from PhoneEntrySerializationHelper, and process the JSON given
-     * in GET version 3 above. Note that when you use the custom serializer/deserializer, it will not be
-     * compatible with methods that do not use it (which will continue to use the Jersey default). If you
-     * decide to customize, then you should be certain to use your (de)serializer throughout your resource!
-     */
-//    @PUT
-//    @Consumes("application/json")
-//    public Response updateAuthor(String json) {
-//        try {
-//            Author a = PhoneEntrySerializationHelper.getHelper().consumeJSON(json);
-//            if (__bService.updateAuthor(a)) {
-//                // In the response payload it would still use Jackson's default serializer,
-//                // so we directly invoke our serializer so the PUT payload reflects what it should.
-//                String aString = PhoneEntrySerializationHelper.getHelper().generateJSON(a);
-//                return Response.status(201).entity(aString).build();
-//            } else {
-//                return Response.status(404, "{ \"message \" : \"No such Author " + a.getAuthorId() + "\"}").build();
-//            }
-//        } catch (Exception exc) {
-//            exc.printStackTrace();
-//            return Response.status(500, "{ \"message \" : \"Internal server error deserializing Author JSON\"}").build();
-//        }
-//    }
 
-//    @DELETE
-//    public Response deleteAuthor(@QueryParam("id") int aid) {
-//        if (__bService.deletePhoneEntry(Integer.toString(aid))) {
-//            return Response.status(204).build();
-//        } else {
-//            return Response.status(404, "{ \"message \" : \"No such Author " + aid + "\"}").build();
-//        }
-//    }
-	/*
-	@PATCH
-	public Response patchAuthor(@QueryParam("id") int aid) {
-		return Response.status(405, "{ \"message \" : \"PATCH not supported\"}").build();
+    @DELETE
+    @Consumes("text/plain")
+    @Path("{number}")
+    public Response deletePhoneEntry(@PathParam("number") String name) {
+        try {
+            String[] values = name.split(" ");
+
+            // first value must be an int
+            try {
+                Integer.parseInt(values[0]);
+
+            } catch (NumberFormatException exc) {
+                exc.printStackTrace();
+                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("{ \" Invalid Format. The first value must be an integer ID representing the phone number to change. \"}").build();
+            }
+
+            // test if it successfully deleted
+            if (__bService.deletePhoneEntry(values[0])) {
+                return Response.status(Response.Status.NO_CONTENT).build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).entity("{ \"message \" : \"No such phone " + values[0] + "\"}").build();
+            }
+
+
+        }
+        catch(Exception exc) {
+            exc.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("{ \" Unexpected Error. Please try again or report. \" }").build();
+        }
     }
-    */
+
+    @PATCH
+    public Response patchEntry (String number) {
+        return Response.status(Response.Status.METHOD_NOT_ALLOWED).entity("{ \"message \" : \"PATCH not supported\"}").build();
+    }
 }

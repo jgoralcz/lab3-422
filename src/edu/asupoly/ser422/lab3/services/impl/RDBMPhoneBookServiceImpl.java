@@ -30,116 +30,36 @@ public class RDBMPhoneBookServiceImpl implements PhoneBookService {
 
 	}
 
+	@Override
 	public List<PhoneEntry> getAllEntriesFromPhoneBook(String phoneBookID) {
 		Connection conn = null;
-		Statement stmt = null;
+		PreparedStatement stmt = null;
 		ResultSet rs = null;
+
 		List<PhoneEntry> rval = new ArrayList<>();
 		try {
 			conn = getConnection();
-
-			stmt = conn.createStatement();
-			rs = stmt.executeQuery(__dbProperties.getProperty("sql.getAllEntriesFromPhoneBook"));
+			stmt = conn.prepareStatement(__dbProperties.getProperty("sql.getAllEntriesFromPhoneBook"));
+			stmt.setInt(1, Integer.parseInt(phoneBookID));
+			rs = stmt.executeQuery();
 			while (rs.next()) {
 				rval.add(new PhoneEntry(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4)));
 			}
-		}
-		catch (Exception se) {
-			se.printStackTrace();
-			return null;
-		}
-		finally {  // why nest all of these try/finally blocks?
+		} catch (Exception sqe) {
+			sqe.printStackTrace();
+			rval = null;
+		} finally {  // why nest all of these try/finally blocks?
 			try {
-				if (rs != null) { rs.close(); }
-			} catch (Exception e1) { e1.printStackTrace(); }
+				rs.close();
+				if (stmt != null) { stmt.close(); }
+			} catch (Exception e2) { e2.printStackTrace(); }
 			finally {
 				try {
-					if (stmt != null) { stmt.close(); }
-				} catch (Exception e2) { e2.printStackTrace(); }
-				finally {
-					try {
-						if (conn != null) { conn.close(); }
-					} catch (Exception e3) { e3.printStackTrace(); }
-				}
+					if (conn != null) { conn.close(); }
+				} catch (Exception e3) { e3.printStackTrace(); }
 			}
 		}
-
 		return rval;
-	}
-
-	public int createPhoneEntry(String phoneNumber, String phoneBookID, String firstName, String lastName) {
-		if (lastName == null || firstName == null || lastName.length() == 0 || firstName.length() == 0) {
-			return -1;
-		}
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		try {
-			conn = getConnection();
-			stmt = conn.prepareStatement(__dbProperties.getProperty("sql.createPhoneEntry"));
-//			int generatedKey = generateKey(1, 99999);
-			stmt.setString(1, phoneNumber);
-			stmt.setString(2, phoneBookID);
-			stmt.setString(3, lastName);
-			stmt.setString(4, firstName);
-			// return stmt.executeUpdate();
-			int updatedRows = stmt.executeUpdate();
-			return -1; //TODO: return an int
-//			if(updatedRows > 0) {
-//				return generatedKey;
-//			}else{
-//				return -1;
-//			}
-		} catch (Exception sqe) {
-			sqe.printStackTrace();
-			return -1;
-		} finally {  // why nest all of these try/finally blocks?
-			try {
-					if (stmt != null) { stmt.close(); }
-			} catch (Exception e2) { e2.printStackTrace(); }
-			finally {
-				try {
-					if (conn != null) { conn.close(); }
-				} catch (Exception e3) { e3.printStackTrace(); }
-			}
-		}
-	}
-
-	public boolean deletePhoneEntry(String phoneNumber) {
-		boolean rval = false;
-		Connection conn = null;
-		PreparedStatement stmt  = null;
-		PreparedStatement stmt2 = null;
-		try {
-			conn = getConnection();
-			conn.setAutoCommit(false);
-			stmt = conn.prepareStatement(__dbProperties.getProperty("sql.deletePhoneEntry"));
-			stmt.setInt(1, Integer.parseInt(phoneNumber));
-			if (rval = (stmt.executeUpdate() > 0)) {
-				stmt2 = conn.prepareStatement(__dbProperties.getProperty("sql.deletePhoneEntryRefFromBook"));
-				stmt2.setInt(1, Integer.parseInt(phoneNumber));
-				stmt2.executeUpdate();
-			}
-			conn.commit();
-			return rval;
-		} catch (Exception sqe) {
-			sqe.printStackTrace();
-			try {
-				conn.rollback();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-			return false;
-		} finally {  // why nest all of these try/finally blocks?
-			try {
-					if (stmt != null) { stmt.close(); }
-					if (stmt2 != null) { stmt2.close(); }
-			} catch (Exception e2) { e2.printStackTrace(); }
-			finally {
-				try {
-					if (conn != null) { conn.close(); }
-				} catch (Exception e3) { e3.printStackTrace(); }
-			}
-		}
 	}
 
 	@Override
@@ -170,6 +90,76 @@ public class RDBMPhoneBookServiceImpl implements PhoneBookService {
 			}
 		}
 		return phoneEntry;
+	}
+
+	public int createPhoneEntry(String phoneNumber, String firstName, String lastName, String phoneBookID) {
+
+		// must have valid input
+		if (lastName == null || firstName == null || lastName.length() == 0 || firstName.length() == 0) {
+			return -1;
+		}
+		Connection conn = null;
+		PreparedStatement stmt = null;
+		try {
+			conn = getConnection();
+			stmt = conn.prepareStatement(__dbProperties.getProperty("sql.createPhoneEntry"));
+			stmt.setString(1, phoneNumber);
+			stmt.setString(2, firstName);
+			stmt.setString(3, lastName);
+			stmt.setString(4, phoneBookID);
+			int updatedRows = stmt.executeUpdate();
+			if(updatedRows > 0) {
+				return Integer.parseInt(phoneNumber);
+			}else{
+				return -1;
+			}
+		} catch (Exception sqe) {
+			sqe.printStackTrace();
+			return -1;
+		} finally {  // why nest all of these try/finally blocks?
+			try {
+					if (stmt != null) { stmt.close(); }
+			} catch (Exception e2) { e2.printStackTrace(); }
+			finally {
+				try {
+					if (conn != null) { conn.close(); }
+				} catch (Exception e3) { e3.printStackTrace(); }
+			}
+		}
+	}
+
+	public boolean deletePhoneEntry(String phoneNumber) {
+		boolean rval = false;
+		Connection conn = null;
+		PreparedStatement stmt  = null;
+		PreparedStatement stmt2 = null;
+		try {
+			conn = getConnection();
+			conn.setAutoCommit(false);
+			stmt = conn.prepareStatement(__dbProperties.getProperty("sql.deletePhoneEntry"));
+			stmt.setInt(1, Integer.parseInt(phoneNumber));
+			rval = stmt.executeUpdate() > 0;
+			conn.commit();
+			return rval;
+		} catch (Exception sqe) {
+			sqe.printStackTrace();
+			try {
+				conn.rollback();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			return rval;
+		} finally {  // why nest all of these try/finally blocks?
+			try {
+					if (stmt != null) { stmt.close(); }
+					if (stmt2 != null) { stmt2.close(); }
+			} catch (Exception e2) { e2.printStackTrace(); }
+			finally {
+				try {
+					if (conn != null) { conn.close(); }
+				} catch (Exception e3) { e3.printStackTrace(); }
+			}
+		}
 	}
 
 	@Override
@@ -232,33 +222,41 @@ public class RDBMPhoneBookServiceImpl implements PhoneBookService {
 	}
 
 	@Override
-	public PhoneEntry getUnlistedPhoneEntries() {
+	public List<PhoneEntry> getUnlistedPhoneEntries() {
 		Connection conn = null;
-		PreparedStatement stmt = null;
+		Statement stmt = null;
 		ResultSet rs = null;
-		PhoneEntry phoneEntry = null;
+		List<PhoneEntry> rval = new ArrayList<>();
 		try {
 			conn = getConnection();
-			stmt = conn.prepareStatement(__dbProperties.getProperty("sql.getUnlistedPhoneEntries"));
-			rs = stmt.executeQuery();
-			if (rs.next()) {
-				phoneEntry = new PhoneEntry(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4));
-			}
 
-		} catch (Exception sqe) {
-			sqe.printStackTrace();
-		} finally {  // why nest all of these try/finally blocks?
-			try {
-				rs.close();
-				if (stmt != null) { stmt.close(); }
-			} catch (Exception e2) { e2.printStackTrace(); }
-			finally {
-				try {
-					if (conn != null) { conn.close(); }
-				} catch (Exception e3) { e3.printStackTrace(); }
+			stmt = conn.createStatement();
+			rs = stmt.executeQuery(__dbProperties.getProperty("sql.getAllEntriesFromPhoneBook"));
+			while (rs.next()) {
+				rval.add(new PhoneEntry(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4)));
 			}
 		}
-		return phoneEntry;
+		catch (Exception se) {
+			se.printStackTrace();
+			return null;
+		}
+		finally {  // why nest all of these try/finally blocks?
+			try {
+				if (rs != null) { rs.close(); }
+			} catch (Exception e1) { e1.printStackTrace(); }
+			finally {
+				try {
+					if (stmt != null) { stmt.close(); }
+				} catch (Exception e2) { e2.printStackTrace(); }
+				finally {
+					try {
+						if (conn != null) { conn.close(); }
+					} catch (Exception e3) { e3.printStackTrace(); }
+				}
+			}
+		}
+
+		return rval;
 	}
 
 	public boolean updatePhoneBookToPhoneEntry(String phoneNumber, String id) {
@@ -271,7 +269,7 @@ public class RDBMPhoneBookServiceImpl implements PhoneBookService {
 			conn.setAutoCommit(false);
 			stmt = conn.prepareStatement(__dbProperties.getProperty("sql.addPhoneBookToPhoneEntry"));
 			stmt.setInt(1, Integer.parseInt(phoneNumber));
-			stmt.setInt(1, Integer.parseInt(id));
+			stmt.setInt(2, Integer.parseInt(id));
 			rval = stmt.executeUpdate() > 0;
 			conn.commit();
 			return rval;

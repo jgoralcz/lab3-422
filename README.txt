@@ -17,4 +17,5 @@ Great! We got the database setup.
 
 - an example url for me (change the port): `http://localhost:8081/lab3_jgoralcz/rest/phones/number/480110987`
 
-
+When implementing the DELETE of phone entries, I thought about using a query parameter instead of a path parameter, but after some searching,
+I came to the conclusion that I should use it the same way I GET. In this case, I used the path parameter.
