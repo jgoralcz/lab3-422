@@ -1,5 +1,6 @@
 package edu.asupoly.ser422.lab3.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.asupoly.ser422.lab3.model.PhoneEntry;
 import edu.asupoly.ser422.lab3.services.PhoneBookService;
 import edu.asupoly.ser422.lab3.services.PhoneBookServiceFactory;
@@ -9,7 +10,11 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.List;
+
+//import javax.ws.rs.Consumes;
+//import javax.ws.rs.PATCH;
+//import javax.ws.rs.POST;
+//import javax.ws.rs.PUT;
 
 @Path("/phones")
 @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -53,70 +58,53 @@ public class PhoneEntryResource {
      *  ]
      *
      * */
-    @GET
-    @Path("/{phoneBookID}")
-    public Response getPhoneEntriesFromPhoneBookID(int id) {
-        try {
-            // get the phone boook
-            List<PhoneEntry> phonebook = __bService.getAllEntriesFromPhoneBook(Integer.toString(id));
-            StringBuilder aString = new StringBuilder("[");
+//    @GET
+//    @Path("/{phonebook}")
+//    public Response getPhoneEntriesFromPhoneBookID(int id) {
+//        try {
+//            // get the phone boook
+//            List<PhoneEntry> phonebook = __bService.getAllEntriesFromPhoneBook(Integer.toString(id));
+//            StringBuilder aString = new StringBuilder("[");
+//
+//            for( PhoneEntry phoneEntry : phonebook) {
+//                aString.append(PhoneEntrySerializationHelper.getHelper().generateJSON(phoneEntry));
+//            }
+//
+//            aString.append("]");
+//            return Response.status(Response.Status.OK).entity(aString).build();
+//
+//        } catch (Exception exc) {
+//            exc.printStackTrace();
+//            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Internal Server Error.").build();
+//        }
+//    }
 
-            for( PhoneEntry phoneEntry : phonebook) {
-                aString.append(PhoneEntrySerializationHelper.getHelper().generateJSON(phoneEntry));
-            }
-
-            aString.append("]");
-            return Response.status(Response.Status.OK).entity(aString).build();
-
-        } catch (Exception exc) {
-            exc.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Internal Server Error.").build();
-        }
-    }
-
-    /* This is the first version of GET we did, using defaults and letting Jersey internally serialize
-     @GET
-    @Path("/{authorId}")
-    public Author getAuthor(@PathParam("authorId") int aid) {
-        return __bService.getAuthor(aid);
-    }
-     */
     /*
      * This is a second version - it uses Jackson's default mapping via ObjectMapper, which spits out
      * the same JSON as Jersey's internal version, so the output will look the same as version 1 when you run
      */
-//    @GET
-//    @Path("/{authorId}")
-//    public Response getAuthor(@PathParam("authorId") int aid) {
-//        // This isn't correct - what if the authorId is not for an active author?
-//        Author author = __bService.getAuthor(aid);
-//        // let's use Jackson instead. ObjectMapper will build a JSON string and we use
-//        // the ResponseBuilder to use that. Note the result looks the same
-//        try {
-//            String aString = new ObjectMapper().writeValueAsString(author);
-//            return Response.status(Response.Status.OK).entity(aString).build();
-//        } catch (Exception exc) {
-//            exc.printStackTrace();
-//            return null;
-//        }
-//    }
-
-    // This is a 3rd version using a custom serializer I've encapsulated over in the new helper class
     @GET
-	@Path("/{phoneNumber}")
-	public Response getPhoneEntry(@PathParam("phoneNumber") int aid) {
-		PhoneEntry phoneEntry = __bService.getPhoneEntry(Integer.toString(aid));
+    @Path("/{number}")
+    public Response getPhoneEntry(@PathParam("number") String pid) {
+        // This isn't correct - what if the authorId is not for an active author?
+        // let's use Jackson instead. ObjectMapper will build a JSON string and we use
+        // the ResponseBuilder to use that. Note the result looks the same
+        try {
+            // bad info
+            if(pid == null || pid.equals("")) {
+                System.out.println("Nice try!");
+                return Response.status(Response.Status.NOT_ACCEPTABLE).entity("Invalid Input: Include a phone number.").build();
+            }
 
-		// PhoneEntrySerializationHelper will build a slightly different JSON string and we still use
-		// the ResponseBuilder to use that. The key property names are changed in the result.
-		try {
-			String aString = PhoneEntrySerializationHelper.getHelper().generateJSON(phoneEntry);
-			return Response.status(Response.Status.OK).entity(aString).build();
-		} catch (Exception exc) {
-			exc.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Internal Server Error.").build();
-		}
-	}
+            System.out.println("Working!");
+            PhoneEntry phoneEntry = __bService.getPhoneEntry(pid);
+            String aString = new ObjectMapper().writeValueAsString(phoneEntry);
+            return Response.status(Response.Status.OK).entity(aString).build();
+        } catch (Exception exc) {
+            exc.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("error").build();
+        }
+    }
 	/* This was the first version of POST we did
 	@POST
 	@Consumes("text/plain")
@@ -183,14 +171,14 @@ public class PhoneEntryResource {
 //        }
 //    }
 
-    @DELETE
-    public Response deleteAuthor(@QueryParam("id") int aid) {
-        if (__bService.deletePhoneEntry(Integer.toString(aid))) {
-            return Response.status(204).build();
-        } else {
-            return Response.status(404, "{ \"message \" : \"No such Author " + aid + "\"}").build();
-        }
-    }
+//    @DELETE
+//    public Response deleteAuthor(@QueryParam("id") int aid) {
+//        if (__bService.deletePhoneEntry(Integer.toString(aid))) {
+//            return Response.status(204).build();
+//        } else {
+//            return Response.status(404, "{ \"message \" : \"No such Author " + aid + "\"}").build();
+//        }
+//    }
 	/*
 	@PATCH
 	public Response patchAuthor(@QueryParam("id") int aid) {

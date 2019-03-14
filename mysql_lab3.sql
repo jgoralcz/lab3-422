@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 5.7.21, for macOS (x86_64)
 --
--- Host: localhost    Database: phonebook
+-- Host: localhost    Database: jgoralcz_phonebook
 -- ------------------------------------------------------
 --
 -- Table structure for table `phone_entry`
@@ -10,8 +10,8 @@ CREATE DATABASE IF NOT EXISTS `jgoralcz_phonebook`;
 USE `jgoralcz_phonebook`;
 
 CREATE TABLE IF NOT EXISTS `phone_entry` (
-  `phonenumber` int(10) PRIMARY KEY,
-  `phone_book_id` int(10) REFERENCES phone_books(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  `phonenumber` BIGINT(10) PRIMARY KEY,
+  `phone_book_id` BIGINT(10) REFERENCES phone_books(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   `first_name` text,
   `last_name` text
 );
@@ -27,7 +27,7 @@ INSERT IGNORE INTO `phone_entry` VALUES (480110987, null, 'Jimmy','V'), (4805551
 --
 
 CREATE TABLE IF NOT EXISTS `phone_books` (
-  `id` int(10) PRIMARY KEY,
+  `id` BIGINT(10) PRIMARY KEY,
   `name` text
 );
 

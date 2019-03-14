@@ -1,7 +1,7 @@
 {
   "name": "lab3",
   "version": "0.1.0",
-  "description": "SER 422 Lab 3 API for a PhoneBook",
+  "description": "SER 422 Lab 3 API for a PhoneBook and PhoneEntry",
   "title": "PhoneBook",
   "url" : "https://localhost:8080/lab3/rest/"
 }

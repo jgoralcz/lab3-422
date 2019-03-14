@@ -34,7 +34,7 @@ public class RDBMPhoneBookServiceImpl implements PhoneBookService {
 		Connection conn = null;
 		Statement stmt = null;
 		ResultSet rs = null;
-		List<PhoneEntry> rval = new ArrayList<PhoneEntry>();
+		List<PhoneEntry> rval = new ArrayList<>();
 		try {
 			conn = getConnection();
 

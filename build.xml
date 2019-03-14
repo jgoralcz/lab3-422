@@ -1,4 +1,4 @@
-<project name="RestExampleAPI" default="deploy">
+<project name="lab3" default="deploy">
     
     <property file="build.properties" />
 
@@ -14,6 +14,7 @@
     <target name="OS-MAC-UNIX" unless="isWindows">
         <property name="apicmd" value="apidoc"/>
     </target>
+    <!-- end of detecting-->
 
 
     <path id="classpath">
@@ -38,8 +39,9 @@
         <copy file="${properties}/lab3.properties" todir="${destdir}/WEB-INF/classes/"/>
         <copy file="${properties}/rdbm.properties" todir="${destdir}/WEB-INF/classes/"/>
     </target>
-    
-    <target name="build" depends="compile,apidoc">
+
+    <!--<target name="build" depends="compile,apidoc">-->
+    <target name="build" depends="compile">
         <copy file="web.xml" todir="${destdir}/WEB-INF"/>
         <copy todir="${destdir}/${apidocdir}">
             <fileset dir="${apidocdir}"/>
@@ -48,12 +50,12 @@
     </target>
 
 
-    <target name="apidoc" depends="OS-WIN,OS-MAC-UNIX">
-        <mkdir dir="${apidocdir}"/>
-        <exec dir="." executable="${apicmd}">
-            <arg line="-i ./${srcdir} -o ./${apidocdir}"/>
-        </exec>
-    </target>
+    <!--<target name="apidoc" depends="OS-WIN,OS-MAC-UNIX">-->
+        <!--<mkdir dir="${apidocdir}"/>-->
+        <!--<exec dir="." executable="${apicmd}">-->
+            <!--<arg line="-i ./${srcdir} -o ./${apidocdir}"/>-->
+        <!--</exec>-->
+    <!--</target>-->
 
 
     <target name="deploy" depends="build">
