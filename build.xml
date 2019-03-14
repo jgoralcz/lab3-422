@@ -40,8 +40,8 @@
         <copy file="${properties}/rdbm.properties" todir="${destdir}/WEB-INF/classes/"/>
     </target>
 
-    <!--<target name="build" depends="compile,apidoc">-->
-    <target name="build" depends="compile">
+    <target name="build" depends="compile,apidoc">
+    <!--<target name="build" depends="compile">-->
         <copy file="web.xml" todir="${destdir}/WEB-INF"/>
         <copy todir="${destdir}/${apidocdir}">
             <fileset dir="${apidocdir}"/>
@@ -50,12 +50,12 @@
     </target>
 
 
-    <!--<target name="apidoc" depends="OS-WIN,OS-MAC-UNIX">-->
-        <!--<mkdir dir="${apidocdir}"/>-->
-        <!--<exec dir="." executable="${apicmd}">-->
-            <!--<arg line="-i ./${srcdir} -o ./${apidocdir}"/>-->
-        <!--</exec>-->
-    <!--</target>-->
+    <target name="apidoc" depends="OS-WIN,OS-MAC-UNIX">
+        <mkdir dir="${apidocdir}"/>
+        <exec dir="." executable="${apicmd}">
+            <arg line="-i ./${srcdir} -o ./${apidocdir}"/>
+        </exec>
+    </target>
 
 
     <target name="deploy" depends="build">
@@ -78,7 +78,7 @@
         <delete file="${warfile}" />
         <delete file="${submit.jar}" />
         <delete dir="${destdir}"/>
-        <!--<delete dir="${apidocdir}"/>-->
+        <delete dir="${apidocdir}"/>
     </target>
     
     <target name="undeploy">
