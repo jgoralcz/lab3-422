@@ -5,10 +5,13 @@
 --
 -- Table structure for table `phone_entry`
 --
+CREATE DATABASE IF NOT EXISTS `jgoralcz_phonebook`;
+
+USE `jgoralcz_phonebook`;
 
 CREATE TABLE IF NOT EXISTS `phone_entry` (
   `phonenumber` int(10) PRIMARY KEY,
-  `phone_book_id` int(10) NOT NULL REFERENCES phone_books(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  `phone_book_id` int(10) REFERENCES phone_books(`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   `first_name` text,
   `last_name` text
 );
@@ -24,7 +27,7 @@ INSERT IGNORE INTO `phone_entry` VALUES (480110987, null, 'Jimmy','V'), (4805551
 --
 
 CREATE TABLE IF NOT EXISTS `phone_books` (
-  `id` int(7) PRIMARY KEY,
+  `id` int(10) PRIMARY KEY,
   `name` text
 );
 

@@ -54,8 +54,24 @@ public class PhoneEntryResource {
      *
      * */
     @GET
-    public List<PhoneEntry> getPhoneEntriesFromPhoneBookID(int id) {
-        return __bService.getAllEntriesFromPhoneBook(Integer.toString(id));
+    @Path("/{phoneBookID}")
+    public Response getPhoneEntriesFromPhoneBookID(int id) {
+        try {
+            // get the phone boook
+            List<PhoneEntry> phonebook = __bService.getAllEntriesFromPhoneBook(Integer.toString(id));
+            StringBuilder aString = new StringBuilder("[");
+
+            for( PhoneEntry phoneEntry : phonebook) {
+                aString.append(PhoneEntrySerializationHelper.getHelper().generateJSON(phoneEntry));
+            }
+
+            aString.append("]");
+            return Response.status(Response.Status.OK).entity(aString).build();
+
+        } catch (Exception exc) {
+            exc.printStackTrace();
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Internal Server Error.").build();
+        }
     }
 
     /* This is the first version of GET we did, using defaults and letting Jersey internally serialize
@@ -98,7 +114,7 @@ public class PhoneEntryResource {
 			return Response.status(Response.Status.OK).entity(aString).build();
 		} catch (Exception exc) {
 			exc.printStackTrace();
-			return null;
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Internal Server Error.").build();
 		}
 	}
 	/* This was the first version of POST we did
